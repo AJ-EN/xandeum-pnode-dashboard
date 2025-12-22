@@ -367,24 +367,47 @@ interface GeoIpResult {
     isp?: string;
 }
 
+// In-memory cache for GeoIP results to reduce API calls
+// This prevents hitting ip-api.com's rate limit (45 req/min)
+const geoIpCache = new Map<string, { result: GeoIpResult; timestamp: number }>();
+const GEO_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 /**
  * Batch lookup geographic coordinates for a list of IP addresses.
  * Uses the free ip-api.com batch endpoint (max 100 IPs per request).
+ * Results are cached for 5 minutes to reduce API calls.
  * 
  * Note: ip-api.com has rate limits (45 requests/minute for free tier).
- * For production, consider a paid service or caching.
  */
 async function batchGeoIpLookup(ips: string[]): Promise<Map<string, GeoIpResult>> {
     const geoMap = new Map<string, GeoIpResult>();
+    const now = Date.now();
 
     if (ips.length === 0) return geoMap;
+
+    // Check cache first, collect IPs that need fetching
+    const ipsToFetch: string[] = [];
+    for (const ip of ips) {
+        const cached = geoIpCache.get(ip);
+        if (cached && (now - cached.timestamp) < GEO_CACHE_TTL_MS) {
+            geoMap.set(ip, cached.result);
+        } else {
+            ipsToFetch.push(ip);
+        }
+    }
+
+    // If all IPs were cached, return early
+    if (ipsToFetch.length === 0) {
+        console.log(`[prpc] GeoIP lookup: ${geoMap.size}/${ips.length} IPs resolved (all cached)`);
+        return geoMap;
+    }
 
     // ip-api.com batch endpoint supports up to 100 IPs
     const batchSize = 100;
     const batches: string[][] = [];
 
-    for (let i = 0; i < ips.length; i += batchSize) {
-        batches.push(ips.slice(i, i + batchSize));
+    for (let i = 0; i < ipsToFetch.length; i += batchSize) {
+        batches.push(ipsToFetch.slice(i, i + batchSize));
     }
 
     for (const batch of batches) {
@@ -401,16 +424,21 @@ async function batchGeoIpLookup(ips: string[]): Promise<Map<string, GeoIpResult>
                 for (const result of results) {
                     if (result.status === 'success' && result.query) {
                         geoMap.set(result.query, result);
+                        // Cache the successful result
+                        geoIpCache.set(result.query, { result, timestamp: now });
                     }
                 }
+            } else if (response.status === 429) {
+                // Rate limited - use cached data or skip
+                console.warn('[prpc] GeoIP rate limited, using cached data where available');
             }
         } catch (error) {
             console.warn('[prpc] GeoIP batch lookup failed:', error);
-            // Continue without geo data
+            // Continue without geo data - the map will just render without coordinates
         }
     }
 
-    console.log(`[prpc] GeoIP lookup: ${geoMap.size}/${ips.length} IPs resolved`);
+    console.log(`[prpc] GeoIP lookup: ${geoMap.size}/${ips.length} IPs resolved (${ips.length - ipsToFetch.length} cached)`);
     return geoMap;
 }
 

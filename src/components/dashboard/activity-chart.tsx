@@ -122,8 +122,18 @@ export function ActivityChart({ nodes, isLoading }: ActivityChartProps) {
             <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-base font-medium">Network Activity</CardTitle>
-                        <CardDescription>24-hour latency trends (simulated)</CardDescription>
+                        <div className="flex items-center gap-2">
+                            <CardTitle className="text-base font-medium">Network Activity</CardTitle>
+                            <span
+                                className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                                title="pNodes don't archive historical metrics. This chart shows projected trends based on current network state."
+                            >
+                                SIMULATED
+                            </span>
+                        </div>
+                        <CardDescription className="text-xs">
+                            Projected 24h trends based on real-time snapshot
+                        </CardDescription>
                     </div>
                     <div className="flex gap-4 text-right">
                         <div>
@@ -131,7 +141,7 @@ export function ActivityChart({ nodes, isLoading }: ActivityChartProps) {
                             <p className="text-lg font-semibold">{currentLatency}ms</p>
                         </div>
                         <div>
-                            <p className="text-xs text-muted-foreground">Average</p>
+                            <p className="text-xs text-muted-foreground">Projected Avg</p>
                             <p className="text-lg font-semibold text-muted-foreground">{avgLatency}ms</p>
                         </div>
                     </div>
