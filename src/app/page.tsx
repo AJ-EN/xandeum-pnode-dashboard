@@ -5,25 +5,26 @@ import { StatsGrid } from '@/components/dashboard/stats-grid';
 import { NodeTable } from '@/components/dashboard/node-table';
 import { ActivityChart } from '@/components/dashboard/activity-chart';
 import { MapWrapper } from '@/components/dashboard/map-wrapper';
+import { Button } from '@/components/ui/button';
 
 export default function Home() {
     const { nodes, stats, isLoading, error, refetch, lastUpdated } = usePNodes();
 
     return (
-        <main className="min-h-screen bg-[#0b0b0b]">
+        <main className="dark min-h-screen">
             {/* Header */}
-            <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0b0b0b]/80 backdrop-blur-xl">
+            <header className="sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-xl">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             {/* Logo / Title */}
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 animate-pulse-glow">
                                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
                             </div>
                             <div>
-                                <h1 className="text-lg sm:text-xl font-bold text-white">
+                                <h1 className="text-lg sm:text-xl font-bold gradient-text">
                                     Xandeum Network Monitor
                                 </h1>
                                 <p className="text-xs text-gray-500 hidden sm:block">
@@ -33,24 +34,26 @@ export default function Home() {
                         </div>
 
                         <div className="flex items-center gap-3">
+                            {/* Live indicator */}
+                            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse glow-emerald" />
+                                <span className="text-xs font-medium text-emerald-400">Live</span>
+                            </div>
+
                             {/* Last updated indicator */}
                             {lastUpdated && (
                                 <span className="text-xs text-gray-500 hidden sm:block">
-                                    Updated {new Date(lastUpdated).toLocaleTimeString()}
+                                    {new Date(lastUpdated).toLocaleTimeString()}
                                 </span>
                             )}
 
                             {/* Refresh button */}
-                            <button
+                            <Button
                                 onClick={() => refetch()}
                                 disabled={isLoading}
-                                className={`
-                                    flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg
-                                    bg-white/10 hover:bg-white/15 border border-white/10
-                                    text-sm font-medium text-gray-200
-                                    transition-all duration-200
-                                    disabled:opacity-50 disabled:cursor-not-allowed
-                                `}
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
                             >
                                 <svg
                                     className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`}
@@ -66,7 +69,7 @@ export default function Home() {
                                     />
                                 </svg>
                                 <span className="hidden sm:inline">Refresh</span>
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>

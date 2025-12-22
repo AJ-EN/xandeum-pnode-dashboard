@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import type { PNode, PNodeStatus } from '@/types/pnode';
 import { NodeDetailSheet } from './node-detail-sheet';
-
+import { Card } from '@/components/ui/card';
 interface NodeTableProps {
     nodes: PNode[];
     isLoading?: boolean;
@@ -35,19 +35,35 @@ const REGION_FLAGS: Record<string, { flag: string; name: string }> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function StatusDot({ status }: { status: PNodeStatus }) {
-    const colors: Record<PNodeStatus, string> = {
-        online: 'bg-emerald-500 shadow-emerald-500/50',
-        offline: 'bg-red-500 shadow-red-500/50',
-        degraded: 'bg-amber-500 shadow-amber-500/50',
-        syncing: 'bg-blue-500 shadow-blue-500/50 animate-pulse',
+    const config: Record<PNodeStatus, { dot: string; glow: string; text: string }> = {
+        online: {
+            dot: 'bg-emerald-500',
+            glow: 'glow-emerald',
+            text: 'text-emerald-400',
+        },
+        offline: {
+            dot: 'bg-red-500',
+            glow: 'glow-red',
+            text: 'text-red-400',
+        },
+        degraded: {
+            dot: 'bg-amber-500',
+            glow: 'glow-amber',
+            text: 'text-amber-400',
+        },
+        syncing: {
+            dot: 'bg-blue-500 animate-pulse',
+            glow: 'glow-blue',
+            text: 'text-blue-400',
+        },
     };
+
+    const c = config[status];
 
     return (
         <div className="flex items-center gap-2">
-            <span
-                className={`w-2.5 h-2.5 rounded-full shadow-lg ${colors[status]}`}
-            />
-            <span className="text-xs text-gray-400 capitalize hidden sm:inline">
+            <span className={`w-2.5 h-2.5 rounded-full ${c.dot} ${c.glow}`} />
+            <span className={`text-xs capitalize hidden sm:inline ${c.text}`}>
                 {status}
             </span>
         </div>
@@ -311,7 +327,7 @@ export function NodeTable({ nodes, isLoading }: NodeTableProps) {
 
     return (
         <>
-            <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+            <Card className="border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
                 {/* Filters */}
                 <FilterBar
                     statusFilter={statusFilter}
@@ -424,7 +440,7 @@ export function NodeTable({ nodes, isLoading }: NodeTableProps) {
                         </div>
                     </>
                 )}
-            </div>
+            </Card>
 
             {/* Node Detail Sheet */}
             <NodeDetailSheet

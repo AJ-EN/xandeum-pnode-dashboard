@@ -6,7 +6,6 @@
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss)
-![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
@@ -14,8 +13,8 @@
 
 | Feature | Description |
 |---------|-------------|
-| 🌍 **Global Distribution Map** | Visualizes pNode locations using real GeoIP resolution (Leaflet) |
-| ⚡ **Real-Time Monitoring** | Auto-refreshes data every 30 seconds via pRPC |
+| 🌍 **Global Distribution Map** | Visualizes approximate pNode locations using GeoIP resolution (Leaflet) |
+| ⚡ **Near Real-Time Monitoring** | Auto-refreshes data every 30 seconds via RPC gossip |
 | 📊 **Network Activity Chart** | 24-hour latency trends (simulated, as pNode network doesn't archive metrics) |
 | 🔍 **Smart Filtering** | Filter nodes by status (Online/Offline/Degraded) and software version |
 | 📋 **Detailed Node View** | Click any node to see full network info, software version, and raw JSON |
@@ -25,22 +24,12 @@
 
 ## 🖼️ Screenshots
 
-<details>
-<summary>📸 Click to view dashboard screenshots</summary>
-
 ### Main Dashboard
-- Stats grid with online/offline counts
-- Global map with node locations
-- Activity chart showing network trends
-- Filterable node table
+![Main Dashboard](/public/screenshots/dashboard-main.png)
 
 ### Node Detail Sheet
-- Full pubkey with copy button
-- Network info (IP, ports, region)
-- Software version details
-- Raw JSON for developers
+![Node Detail](/public/screenshots/node-detail.png)
 
-</details>
 
 ---
 
@@ -55,8 +44,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/xandeum-monitor.git
-cd xandeum-monitor
+git clone https://github.com/AJ-EN/xandeum-pnode-dashboard.git
+cd xandeum-pnode-dashboard
 
 # Install dependencies
 npm install
@@ -196,12 +185,6 @@ Returns all pNodes currently visible in gossip.
 2. **GeoIP** — Node locations are resolved from IP addresses using ip-api.com's batch endpoint
 3. **Simulated Chart** — The activity chart generates projected data based on current node stats, as the pNode network doesn't archive historical metrics
 4. **Mock Fallback** — If the RPC is unavailable, the dashboard gracefully displays realistic mock data
-
----
-
-## 📄 License
-
-MIT © 2024
 
 ---
 
