@@ -102,11 +102,16 @@ export function ActivityChart({ nodes }: ActivityChartProps) {
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <div>
-                    <h3 className="text-sm font-medium text-gray-200">
-                        Network Activity
-                    </h3>
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-medium text-gray-200">
+                            Network Activity
+                        </h3>
+                        <span className="px-1.5 py-0.5 text-[10px] font-medium text-amber-400/80 bg-amber-500/10 rounded border border-amber-500/20" title="Historical data is simulated for demonstration as pNode network does not archive metrics">
+                            Simulated
+                        </span>
+                    </div>
                     <p className="text-xs text-gray-500">
-                        Last 24 hours
+                        Last 24 hours (projected)
                     </p>
                 </div>
                 <div className="flex items-center gap-4">
