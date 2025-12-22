@@ -322,6 +322,7 @@ Returns all pNodes currently visible in network gossip.
 ### 🔍 Technical Notes
 
 - **Simulated Chart**: The activity chart generates projected latency data based on current node stats, as the pNode network doesn't archive historical metrics
+- **Smart Caching**: Implements an in-memory TTL cache for GeoIP lookups to prevent hitting API rate limits while maintaining fresh network data
 - **Mock Fallback**: When `XANDEUM_PRPC_URL` is not set or RPC fails, the dashboard displays realistic mock data
 - **SSR Safety**: Leaflet is dynamically imported to avoid server-side rendering issues
 
