@@ -9,8 +9,8 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { Copy, Check, Globe, Code, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface NodeDetailSheetProps {
     node: PNode | null;
@@ -31,40 +31,69 @@ function formatRelativeTime(timestamp: number): string {
     const diff = now - timestamp;
 
     if (diff < 60000) return 'Just now';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)} minutes ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)} hours ago`;
-    return `${Math.floor(diff / 86400000)} days ago`;
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return `${Math.floor(diff / 86400000)}d ago`;
 }
 
 function StatusBadge({ status }: { status: PNodeStatus }) {
-    const variants: Record<PNodeStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-        online: 'default',
-        offline: 'destructive',
-        degraded: 'secondary',
-        syncing: 'outline',
-    };
-
     const colors: Record<PNodeStatus, string> = {
-        online: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30',
-        offline: 'bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30',
-        degraded: 'bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/30',
-        syncing: 'bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30',
+        online: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+        offline: 'bg-red-500/15 text-red-400 border-red-500/30',
+        degraded: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+        syncing: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
     };
 
     return (
-        <Badge variant={variants[status]} className={colors[status]}>
+        <Badge variant="outline" className={`${colors[status]} border font-semibold text-xs px-2 py-0.5`}>
             {status.charAt(0).toUpperCase() + status.slice(1)}
         </Badge>
     );
 }
 
-function DefinitionItem({ label, value, mono = false }: { label: string; value: React.ReactNode; mono?: boolean }) {
+function DataRow({ label, value, mono = false }: { label: string; value: React.ReactNode; mono?: boolean }) {
     return (
-        <div className="py-3 border-b border-white/5 last:border-0">
-            <dt className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{label}</dt>
-            <dd className={`text-sm text-foreground ${mono ? 'font-mono' : ''}`}>
-                {value || <span className="text-muted-foreground">—</span>}
-            </dd>
+        <div className="flex items-start justify-between py-2 border-b border-white/[0.04] last:border-0">
+            <span className="text-[11px] text-white/40 uppercase tracking-wide">{label}</span>
+            <span className={`text-sm text-white/80 text-right ${mono ? 'font-mono text-xs' : ''}`}>
+                {value || <span className="text-white/30">—</span>}
+            </span>
+        </div>
+    );
+}
+
+function Section({
+    title,
+    icon,
+    children,
+    defaultOpen = true
+}: {
+    title: string;
+    icon: React.ReactNode;
+    children: React.ReactNode;
+    defaultOpen?: boolean;
+}) {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
+
+    return (
+        <div className="mb-4">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center gap-2 w-full text-left py-1.5 hover:bg-white/[0.02] rounded transition-colors"
+            >
+                {isOpen ? (
+                    <ChevronDown className="w-3.5 h-3.5 text-white/40" />
+                ) : (
+                    <ChevronRight className="w-3.5 h-3.5 text-white/40" />
+                )}
+                {icon}
+                <span className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">{title}</span>
+            </button>
+            {isOpen && (
+                <div className="mt-2 bg-white/[0.02] rounded-lg px-3 ring-1 ring-white/[0.04]">
+                    {children}
+                </div>
+            )}
         </div>
     );
 }
@@ -91,162 +120,127 @@ export function NodeDetailSheet({ node, isOpen, onClose }: NodeDetailSheetProps)
 
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent className="w-full sm:max-w-[450px] bg-background/95 backdrop-blur-xl border-l border-white/10 overflow-y-auto">
-                <SheetHeader className="pb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                        <StatusBadge status={node.status} />
-                        {node.isActive && (
-                            <span className="text-xs text-muted-foreground">Active in gossip</span>
-                        )}
-                    </div>
-                    <SheetTitle className="flex items-center gap-2 text-left">
-                        <code className="text-sm font-mono text-foreground truncate">
-                            {node.pubkey.slice(0, 12)}...{node.pubkey.slice(-8)}
-                        </code>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleCopyPubkey}
-                            className="h-8 w-8 p-0"
-                        >
-                            {copied ? (
-                                <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                            ) : (
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                            )}
-                        </Button>
-                    </SheetTitle>
-                </SheetHeader>
-
-                <Separator className="my-4 bg-white/10" />
-
-                {/* Content */}
-                <div className="space-y-6">
-                    {/* Network Section */}
-                    <section>
-                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                            </svg>
-                            Network
-                        </h3>
-                        <div className="bg-white/5 rounded-lg px-4">
-                            <DefinitionItem label="IP Address" value={node.network.host} mono />
-                            <DefinitionItem label="Gossip Port" value={node.network.gossipPort} mono />
-                            <DefinitionItem label="RPC Port" value={node.network.prpcPort} mono />
-                            <DefinitionItem label="Region" value={node.network.region || 'Unknown'} />
-                            {node.network.geo && (
-                                <DefinitionItem
-                                    label="Coordinates"
-                                    value={`${node.network.geo.lat.toFixed(4)}, ${node.network.geo.lng.toFixed(4)}`}
-                                    mono
-                                />
+            <SheetContent className="w-full sm:max-w-[400px] bg-[#0a0a12]/98 backdrop-blur-xl border-l border-white/[0.06] overflow-y-auto p-0">
+                {/* Header */}
+                <div className="px-4 py-4 border-b border-white/[0.04]">
+                    <SheetHeader className="pb-0">
+                        <div className="flex items-center gap-2 mb-2">
+                            <StatusBadge status={node.status} />
+                            {node.isActive && (
+                                <span className="text-[10px] text-white/40">Active</span>
                             )}
                         </div>
-                    </section>
+                        <SheetTitle className="flex items-center gap-2 text-left">
+                            <code className="text-sm font-mono text-white/80 truncate">
+                                {node.pubkey.slice(0, 10)}...{node.pubkey.slice(-6)}
+                            </code>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleCopyPubkey}
+                                className="h-6 w-6 p-0 hover:bg-white/5 shrink-0"
+                            >
+                                {copied ? (
+                                    <Check className="w-3 h-3 text-emerald-400" />
+                                ) : (
+                                    <Copy className="w-3 h-3 text-white/40" />
+                                )}
+                            </Button>
+                        </SheetTitle>
+                    </SheetHeader>
 
-                    {/* Software Section */}
-                    <section>
-                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                            </svg>
-                            Software
-                        </h3>
-                        <div className="bg-white/5 rounded-lg px-4">
-                            <DefinitionItem label="Version" value={node.versionInfo?.version} mono />
-                            <DefinitionItem label="Feature Set" value={node.versionInfo?.featureSet?.toString()} mono />
-                            <DefinitionItem label="Shred Version" value={node.versionInfo?.shredVersion?.toString()} mono />
-                        </div>
-                    </section>
-
-                    {/* Health Section */}
+                    {/* Health Score - Prominent */}
                     {node.healthScore !== undefined && (
-                        <section>
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Health
-                            </h3>
-                            <div className="bg-white/5 rounded-lg px-4">
-                                <DefinitionItem
-                                    label="Health Score"
-                                    value={
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full rounded-full transition-all ${node.healthScore >= 80 ? 'bg-emerald-500 glow-emerald' :
-                                                        node.healthScore >= 50 ? 'bg-amber-500 glow-amber' : 'bg-red-500 glow-red'
-                                                        }`}
-                                                    style={{ width: `${node.healthScore}%` }}
-                                                />
-                                            </div>
-                                            <span className="text-sm font-bold">{node.healthScore}%</span>
-                                        </div>
-                                    }
+                        <div className="mt-4 p-3 bg-white/[0.02] rounded-lg ring-1 ring-white/[0.04]">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] text-white/40 uppercase tracking-wide">Health Score</span>
+                                <span className={`text-lg font-bold ${node.healthScore >= 80 ? 'text-emerald-400' :
+                                        node.healthScore >= 50 ? 'text-amber-400' : 'text-red-400'
+                                    }`}>
+                                    {node.healthScore}%
+                                </span>
+                            </div>
+                            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all ${node.healthScore >= 80 ? 'bg-emerald-500' :
+                                            node.healthScore >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                                        }`}
+                                    style={{ width: `${node.healthScore}%` }}
                                 />
                             </div>
-                        </section>
-                    )}
-
-                    {/* Timestamps Section */}
-                    <section>
-                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Timestamps
-                        </h3>
-                        <div className="bg-white/5 rounded-lg px-4">
-                            <DefinitionItem
-                                label="First Seen"
-                                value={
-                                    <div>
-                                        <span>{formatRelativeTime(node.firstSeenAt)}</span>
-                                        <span className="text-xs text-muted-foreground ml-2">({formatTimestamp(node.firstSeenAt)})</span>
-                                    </div>
-                                }
-                            />
-                            <DefinitionItem
-                                label="Last Seen"
-                                value={
-                                    <div>
-                                        <span>{formatRelativeTime(node.lastSeenAt)}</span>
-                                        <span className="text-xs text-muted-foreground ml-2">({formatTimestamp(node.lastSeenAt)})</span>
-                                    </div>
-                                }
-                            />
-                            <DefinitionItem
-                                label="Last Updated"
-                                value={formatTimestamp(node.updatedAt)}
-                            />
                         </div>
-                    </section>
+                    )}
+                </div>
 
-                    {/* Raw JSON Section */}
-                    <section>
-                        <details
-                            open={showRawJson}
-                            onToggle={(e) => setShowRawJson((e.target as HTMLDetailsElement).open)}
+                {/* Content */}
+                <div className="px-4 py-4">
+                    {/* Network Section - Primary */}
+                    <Section
+                        title="Network"
+                        icon={<Globe className="w-3.5 h-3.5 text-cyan-400" />}
+                        defaultOpen={true}
+                    >
+                        <DataRow label="IP Address" value={node.network.host} mono />
+                        <DataRow label="Gossip Port" value={node.network.gossipPort} mono />
+                        <DataRow label="RPC Port" value={node.network.prpcPort} mono />
+                        <DataRow label="Region" value={node.network.region || 'Unknown'} />
+                        {node.network.geo && (
+                            <DataRow
+                                label="Coordinates"
+                                value={`${node.network.geo.lat.toFixed(4)}, ${node.network.geo.lng.toFixed(4)}`}
+                                mono
+                            />
+                        )}
+                    </Section>
+
+                    {/* Software Section */}
+                    <Section
+                        title="Software"
+                        icon={<Code className="w-3.5 h-3.5 text-purple-400" />}
+                        defaultOpen={true}
+                    >
+                        <DataRow label="Version" value={node.versionInfo?.version} mono />
+                        <DataRow label="Feature Set" value={node.versionInfo?.featureSet?.toString()} mono />
+                        <DataRow label="Shred Version" value={node.versionInfo?.shredVersion?.toString()} mono />
+                    </Section>
+
+                    {/* Timestamps - Collapsed by default */}
+                    <Section
+                        title="Timestamps"
+                        icon={<span className="w-3.5 h-3.5 text-amber-400">🕐</span>}
+                        defaultOpen={false}
+                    >
+                        <DataRow
+                            label="Last Seen"
+                            value={formatRelativeTime(node.lastSeenAt)}
+                        />
+                        <DataRow
+                            label="First Seen"
+                            value={formatRelativeTime(node.firstSeenAt)}
+                        />
+                        <DataRow
+                            label="Updated"
+                            value={formatTimestamp(node.updatedAt)}
+                        />
+                    </Section>
+
+                    {/* Raw JSON - Developer tool */}
+                    <div className="mt-4">
+                        <button
+                            onClick={() => setShowRawJson(!showRawJson)}
+                            className="flex items-center gap-2 text-[10px] font-medium text-white/40 hover:text-white/60 transition-colors"
                         >
-                            <summary className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 cursor-pointer hover:text-foreground transition-colors flex items-center gap-2">
-                                <svg className={`w-4 h-4 transition-transform ${showRawJson ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                                Raw JSON (Developer)
-                            </summary>
-                            <div className="bg-black/50 rounded-lg p-4 overflow-x-auto border border-white/5">
-                                <pre className="text-xs text-muted-foreground font-mono whitespace-pre-wrap break-all">
+                            {showRawJson ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                            Raw JSON
+                        </button>
+                        {showRawJson && (
+                            <div className="mt-2 bg-black/40 rounded-lg p-3 overflow-x-auto ring-1 ring-white/[0.04]">
+                                <pre className="text-[10px] text-white/50 font-mono whitespace-pre-wrap break-all">
                                     {JSON.stringify(node, null, 2)}
                                 </pre>
                             </div>
-                        </details>
-                    </section>
+                        )}
+                    </div>
                 </div>
             </SheetContent>
         </Sheet>

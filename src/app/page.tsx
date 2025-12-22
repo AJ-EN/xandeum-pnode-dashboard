@@ -6,69 +6,48 @@ import { NodeTable } from '@/components/dashboard/node-table';
 import { ActivityChart } from '@/components/dashboard/activity-chart';
 import { MapWrapper } from '@/components/dashboard/map-wrapper';
 import { Button } from '@/components/ui/button';
+import { RefreshCw, Zap } from 'lucide-react';
 
 export default function Home() {
     const { nodes, stats, isLoading, error, refetch, lastUpdated } = usePNodes();
 
     return (
-        <main className="dark min-h-screen">
-            {/* Header */}
-            <header className="sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-xl">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <main className="dark min-h-screen pb-8">
+            {/* Header - Compact */}
+            <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-black/80 backdrop-blur-xl">
+                <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            {/* Logo / Title */}
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 animate-pulse-glow">
-                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
+                            {/* Logo */}
+                            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                                <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h1 className="text-lg sm:text-xl font-bold gradient-text">
-                                    Xandeum Network Monitor
+                                <h1 className="text-base sm:text-lg font-bold tracking-tight text-white">
+                                    Xandeum Network
                                 </h1>
-                                <p className="text-xs text-gray-500 hidden sm:block">
-                                    Real-time pNode analytics dashboard
+                                <p className="text-[11px] text-white/40 hidden sm:block">
+                                    pNode Analytics
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                            {/* Live indicator */}
-                            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse glow-emerald" />
-                                <span className="text-xs font-medium text-emerald-400">Live</span>
+                        <div className="flex items-center gap-2">
+                            {/* Live indicator - subtle */}
+                            <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 rounded-md">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wide">Live</span>
                             </div>
-
-                            {/* Last updated indicator */}
-                            {lastUpdated && (
-                                <span className="text-xs text-gray-500 hidden sm:block">
-                                    {new Date(lastUpdated).toLocaleTimeString()}
-                                </span>
-                            )}
 
                             {/* Refresh button */}
                             <Button
                                 onClick={() => refetch()}
                                 disabled={isLoading}
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
-                                className="gap-2"
+                                className="h-8 w-8 p-0 hover:bg-white/5"
                             >
-                                <svg
-                                    className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`}
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                    />
-                                </svg>
-                                <span className="hidden sm:inline">Refresh</span>
+                                <RefreshCw className={`w-3.5 h-3.5 text-white/50 ${isLoading ? 'animate-spin' : ''}`} />
                             </Button>
                         </div>
                     </div>
@@ -76,76 +55,46 @@ export default function Home() {
             </header>
 
             {/* Main content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+            <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
                 {/* Error banner */}
                 {error && (
-                    <div className="rounded-xl border border-red-500/30 bg-red-500/10 backdrop-blur-xl p-4 flex items-start gap-3">
-                        <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div>
-                            <h3 className="text-sm font-medium text-red-400">
-                                Failed to fetch network data
-                            </h3>
-                            <p className="text-xs text-red-300/70 mt-1">
-                                {error}
-                            </p>
+                    <div className="glass-card p-4 flex items-start gap-3 border-red-500/20">
+                        <div className="p-2 rounded-lg bg-red-500/10">
+                            <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-sm text-red-200/80 mb-2">{error}</p>
                             <button
                                 onClick={() => refetch()}
-                                className="text-xs text-red-400 hover:text-red-300 underline mt-2"
+                                className="text-xs font-medium text-red-400 hover:text-red-300 transition-colors"
                             >
-                                Try again
+                                Retry
                             </button>
                         </div>
                     </div>
                 )}
 
-                {/* Stats Grid */}
-                <section>
-                    <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">
-                        Network Overview
-                    </h2>
-                    <StatsGrid stats={stats} isLoading={isLoading} />
-                </section>
+                {/* Stats Bar - Hero stat + secondary metrics */}
+                <StatsGrid stats={stats} isLoading={isLoading} />
 
-                {/* Visualizations - Chart and Map */}
-                <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Node Table - PRIMARY content (moved up from bottom) */}
+                <NodeTable nodes={nodes} isLoading={isLoading} />
+
+                {/* Visualizations - SECONDARY content (moved down) */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <ActivityChart nodes={nodes} />
                     <MapWrapper nodes={nodes} />
-                </section>
-
-                {/* Node Table */}
-                <section>
-                    <div className="flex items-center justify-between mb-3">
-                        <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">
-                            Active Nodes
-                        </h2>
-                        <span className="text-xs text-gray-500">
-                            {nodes.length} nodes
-                        </span>
-                    </div>
-                    <NodeTable nodes={nodes} isLoading={isLoading} />
-                </section>
+                </div>
             </div>
 
-            {/* Footer */}
-            <footer className="border-t border-white/5 mt-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-                        <p>
-                            Powered by{' '}
-                            <a
-                                href="https://xandeum.network"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-purple-400 hover:text-purple-300 transition-colors"
-                            >
-                                Xandeum Network
-                            </a>
-                        </p>
-                        <p>
-                            Auto-refreshes every 30 seconds
-                        </p>
+            {/* Footer - Minimal */}
+            <footer className="border-t border-white/[0.04] mt-8">
+                <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div className="flex items-center justify-between text-[10px] text-white/30">
+                        <span>v1.0.0</span>
+                        <span>Synced {lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : '--:--'}</span>
                     </div>
                 </div>
             </footer>
