@@ -80,8 +80,8 @@ function StatCard({ title, value, subtitle, icon, trend, trendValue, isLoading, 
                             )}
                             {trend && trendValue && (
                                 <span className={`flex items-center gap-0.5 text-xs font-medium ${trend === 'up' ? 'text-green-500' :
-                                        trend === 'down' ? 'text-red-500' :
-                                            'text-muted-foreground'
+                                    trend === 'down' ? 'text-red-500' :
+                                        'text-muted-foreground'
                                     }`}>
                                     {trend === 'up' && <TrendingUp className="h-3 w-3" />}
                                     {trend === 'down' && <TrendingDown className="h-3 w-3" />}
@@ -106,6 +106,11 @@ export function StatsGrid({ stats, isLoading }: StatsGridProps) {
         ? Math.round((stats.totalStorageUsed / stats.totalStorageCapacity) * 100)
         : 0;
 
+    // Check if extended metrics are available (not available from basic getClusterNodes)
+    const hasStorageData = stats.totalStorageCapacity > 0;
+    const hasPerformanceData = stats.avgPerformanceScore > 0;
+    const hasStakingData = stats.totalStaked > 0;
+
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
@@ -120,26 +125,32 @@ export function StatsGrid({ stats, isLoading }: StatsGridProps) {
             />
             <StatCard
                 title="Storage Capacity"
-                value={formatBytes(stats.totalStorageCapacity)}
-                subtitle={`${formatBytes(stats.totalStorageUsed)} used (${storageUsedPercentage}%)`}
+                value={hasStorageData ? formatBytes(stats.totalStorageCapacity) : 'N/A'}
+                subtitle={hasStorageData
+                    ? `${formatBytes(stats.totalStorageUsed)} used (${storageUsedPercentage}%)`
+                    : 'Requires extended pRPC'}
                 icon={<HardDrive className="h-4 w-4" />}
                 isLoading={isLoading}
                 delay={2}
             />
             <StatCard
                 title="Avg Performance"
-                value={`${stats.avgPerformanceScore}%`}
-                subtitle="Network-wide score"
+                value={hasPerformanceData ? `${stats.avgPerformanceScore}%` : 'N/A'}
+                subtitle={hasPerformanceData ? 'Network-wide score' : 'Requires extended pRPC'}
                 icon={<Activity className="h-4 w-4" />}
-                trend={stats.avgPerformanceScore >= 90 ? 'up' : stats.avgPerformanceScore >= 70 ? 'neutral' : 'down'}
-                trendValue={stats.avgPerformanceScore >= 90 ? 'Excellent' : stats.avgPerformanceScore >= 70 ? 'Good' : 'Needs attention'}
+                trend={hasPerformanceData
+                    ? (stats.avgPerformanceScore >= 90 ? 'up' : stats.avgPerformanceScore >= 70 ? 'neutral' : 'down')
+                    : undefined}
+                trendValue={hasPerformanceData
+                    ? (stats.avgPerformanceScore >= 90 ? 'Excellent' : stats.avgPerformanceScore >= 70 ? 'Good' : 'Needs attention')
+                    : undefined}
                 isLoading={isLoading}
                 delay={3}
             />
             <StatCard
                 title="Total Staked"
-                value={`${formatXand(stats.totalStaked)} XAND`}
-                subtitle="Across all pNodes"
+                value={hasStakingData ? `${formatXand(stats.totalStaked)} XAND` : 'N/A'}
+                subtitle={hasStakingData ? 'Across all pNodes' : 'Requires extended pRPC'}
                 icon={<Coins className="h-4 w-4" />}
                 isLoading={isLoading}
                 delay={4}

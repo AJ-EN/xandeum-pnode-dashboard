@@ -195,7 +195,8 @@ export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
         }
     };
 
-    const SortIcon = ({ field }: { field: SortField }) => {
+    // Helper function to render sort icon - NOT a component to avoid "created during render" error
+    const renderSortIcon = (field: SortField) => {
         if (sortField !== field) return null;
         return sortDirection === 'asc' ?
             <ChevronUp className="h-4 w-4" /> :
@@ -258,7 +259,7 @@ export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
                                 onClick={() => handleSort('status')}
                             >
                                 <div className="flex items-center gap-1">
-                                    Status <SortIcon field="status" />
+                                    Status {renderSortIcon('status')}
                                 </div>
                             </TableHead>
                             <TableHead
@@ -266,7 +267,7 @@ export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
                                 onClick={() => handleSort('pubkey')}
                             >
                                 <div className="flex items-center gap-1">
-                                    Pubkey <SortIcon field="pubkey" />
+                                    Pubkey {renderSortIcon('pubkey')}
                                 </div>
                             </TableHead>
                             <TableHead>Operator</TableHead>
@@ -275,7 +276,7 @@ export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
                                 onClick={() => handleSort('region')}
                             >
                                 <div className="flex items-center gap-1">
-                                    Region <SortIcon field="region" />
+                                    Region {renderSortIcon('region')}
                                 </div>
                             </TableHead>
                             <TableHead
@@ -283,7 +284,7 @@ export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
                                 onClick={() => handleSort('version')}
                             >
                                 <div className="flex items-center gap-1">
-                                    Version <SortIcon field="version" />
+                                    Version {renderSortIcon('version')}
                                 </div>
                             </TableHead>
                             <TableHead
@@ -291,7 +292,7 @@ export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
                                 onClick={() => handleSort('healthScore')}
                             >
                                 <div className="flex items-center gap-1">
-                                    Health <SortIcon field="healthScore" />
+                                    Health {renderSortIcon('healthScore')}
                                 </div>
                             </TableHead>
                             <TableHead className="w-10"></TableHead>

@@ -341,10 +341,28 @@ Returns all pNodes currently visible in network gossip.
 
 ### 🔍 Technical Notes
 
-- **Simulated Chart**: The activity chart generates projected latency data based on current node stats, as the pNode network doesn't archive historical metrics
-- **Smart Caching**: Implements an in-memory TTL cache for GeoIP lookups to prevent hitting API rate limits while maintaining fresh network data
-- **Mock Fallback**: When `XANDEUM_PRPC_URL` is not set or RPC fails, the dashboard displays realistic mock data
-- **SSR Safety**: Leaflet is dynamically imported to avoid server-side rendering issues
+#### Data Availability from `getClusterNodes`
+
+The Xandeum pRPC `getClusterNodes` method returns nodes currently visible in network gossip. Here's what data is available:
+
+| Data | Available | Source |
+|------|-----------|--------|
+| ✅ Node pubkeys | Yes | `getClusterNodes` |
+| ✅ Gossip/RPC addresses | Yes | `getClusterNodes` |
+| ✅ Software version | Yes | `getClusterNodes` |
+| ✅ Geographic location | Yes | GeoIP enrichment |
+| ⏳ Storage metrics | No* | Requires extended pRPC |
+| ⏳ Performance scores | No* | Requires extended pRPC |
+| ⏳ Staking data | No* | Requires on-chain queries |
+
+> **Note**: When extended metrics aren't available, the dashboard shows "N/A" rather than misleading zeros. The platform is designed to automatically display richer data when Xandeum's pRPC expands to include these endpoints.
+
+#### Other Technical Details
+
+- **Simulated Chart**: The activity chart generates projected latency trends based on current node snapshots, as the pNode network doesn't archive historical metrics. This is clearly labeled "SIMULATED" in the UI.
+- **Smart Caching**: Implements an in-memory TTL cache for GeoIP lookups to prevent hitting API rate limits while maintaining fresh network data.
+- **Live/Demo Indicator**: The header shows 🟢 Live when connected to real pRPC or 🟡 Demo when using fallback mock data.
+- **SSR Safety**: Leaflet is dynamically imported to avoid server-side rendering issues.
 
 ---
 
