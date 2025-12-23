@@ -10,12 +10,13 @@ export const revalidate = 0;
  */
 export async function GET() {
     try {
-        const nodes = await fetchPNodes();
+        const { nodes, source } = await fetchPNodes();
 
         return NextResponse.json({
             success: true,
             data: nodes,
             count: nodes.length,
+            source, // 'live' or 'mock'
             timestamp: Date.now(),
         });
     } catch (error) {

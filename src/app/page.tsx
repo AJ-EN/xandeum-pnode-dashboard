@@ -7,6 +7,8 @@ import { NodeTable } from '@/components/dashboard/node-table';
 import { NodeDetailSheet } from '@/components/dashboard/node-detail-sheet';
 import { ActivityChart } from '@/components/dashboard/activity-chart';
 import { MapWrapper } from '@/components/dashboard/map-wrapper';
+import { VersionChart } from '@/components/dashboard/version-chart';
+import { RegionalStats } from '@/components/dashboard/regional-stats';
 import { Button } from '@/components/ui/button';
 import type { PNode } from '@/types/pnode';
 import {
@@ -16,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
-    const { nodes, stats, isLoading, error, refetch, lastUpdated } = usePNodes();
+    const { nodes, stats, isLoading, error, refetch, lastUpdated, dataSource } = usePNodes();
     const [selectedNode, setSelectedNode] = useState<PNode | null>(null);
     const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -67,6 +69,19 @@ export default function Dashboard() {
 
                             {/* Actions */}
                             <div className="flex items-center gap-3">
+                                {/* Connection Status Indicator */}
+                                {dataSource && (
+                                    <div
+                                        className={`hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${dataSource === 'live'
+                                            ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                                            : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                                            }`}
+                                        title={dataSource === 'live' ? 'Connected to Xandeum pRPC' : 'Showing demo data'}
+                                    >
+                                        <span className={`w-1.5 h-1.5 rounded-full ${dataSource === 'live' ? 'bg-green-400' : 'bg-yellow-400'}`} />
+                                        {dataSource === 'live' ? 'Live' : 'Demo'}
+                                    </div>
+                                )}
                                 <span className="text-xs text-muted-foreground hidden md:block">
                                     Updated {formatLastUpdated()}
                                 </span>
@@ -127,6 +142,12 @@ export default function Dashboard() {
                         <ActivityChart nodes={nodes} isLoading={isLoading} />
                     </div>
 
+                    {/* Analytics Row: Version & Regional Distribution */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <VersionChart nodes={nodes} isLoading={isLoading} />
+                        <RegionalStats nodes={nodes} isLoading={isLoading} />
+                    </div>
+
                     {/* Node Table */}
                     <div>
                         <h2 className="text-lg font-semibold mb-4">pNode Directory</h2>
@@ -143,7 +164,16 @@ export default function Dashboard() {
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
-                                <span>Built for</span>
+                                <span>Built with ❤️ by</span>
+                                <a
+                                    href="https://github.com/AJ-EN"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[#00D4AA] hover:underline font-medium"
+                                >
+                                    AJ-EN
+                                </a>
+                                <span>for</span>
                                 <a
                                     href="https://xandeum.network"
                                     target="_blank"

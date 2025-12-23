@@ -73,7 +73,7 @@
 <td width="50%">
 
 ### 📈 Activity Chart
-- 24-hour latency trends
+- 24-hour latency trends (simulated)
 - Current vs average comparison
 - Gradient area visualization
 - Custom tooltips with details
@@ -81,10 +81,28 @@
 </td>
 <td width="50%">
 
+### 🥧 Version Distribution
+- Pie chart of software versions
+- Visual breakdown across network
+- Helps identify upgrade status
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 🌐 Regional Analytics
+- Node distribution by region
+- Continent-level summary
+- Visual bar chart breakdown
+
+</td>
+<td width="50%">
+
 ### 📋 Node Directory
 - Sortable by any column
 - Filter by status & version
-- Full-text search
+- Full-text search with `/` shortcut
 - Click for deep-dive details
 
 </td>
@@ -110,9 +128,11 @@ Comprehensive slide-out panel showing:
 | Feature | Description |
 |---------|-------------|
 | ⚡ **Auto-Refresh** | Data updates every 30 seconds automatically |
+| 🟢 **Live/Demo Indicator** | Shows connection status (🟢 Live or 🟡 Demo) |
 | 🌙 **Dark Theme** | Premium dark aesthetic matching Solana ecosystem |
 | 🛡️ **Resilient Mode** | Graceful fallback to mock data if RPC fails |
 | 📱 **Responsive** | Works on desktop, tablet, and mobile |
+| ⌨️ **Keyboard Shortcuts** | Press `/` to focus search from anywhere |
 | ✨ **Premium Effects** | Aurora background, glassmorphism, animations |
 
 ---

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
     Table,
     TableBody,
@@ -48,13 +48,13 @@ function StatusBadge({ status }: { status: PNodeStatus }) {
         <Badge
             variant="outline"
             className={`capitalize font-medium ${status === 'online' ? 'status-online' :
-                    status === 'offline' ? 'status-offline' :
-                        'status-degraded'
+                status === 'offline' ? 'status-offline' :
+                    'status-degraded'
                 }`}
         >
             <span className={`w-2 h-2 rounded-full mr-1.5 ${status === 'online' ? 'bg-green-500' :
-                    status === 'offline' ? 'bg-red-500' :
-                        'bg-yellow-500'
+                status === 'offline' ? 'bg-red-500' :
+                    'bg-yellow-500'
                 }`} />
             {status}
         </Badge>
@@ -107,6 +107,24 @@ export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
     const [versionFilter, setVersionFilter] = useState<string>('all');
     const [sortField, setSortField] = useState<SortField>('status');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    // Keyboard shortcut: Press '/' to focus search
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Only trigger if not already in an input/textarea
+            if (
+                e.key === '/' &&
+                !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)
+            ) {
+                e.preventDefault();
+                searchInputRef.current?.focus();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     // Get unique versions for filter dropdown
     const versions = useMemo(() => {
@@ -191,12 +209,19 @@ export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
+                        ref={searchInputRef}
                         type="text"
                         placeholder="Search by pubkey, operator, or region..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 bg-secondary/50 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                        className="w-full pl-9 pr-12 py-2 bg-secondary/50 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                     />
+                    {/* Keyboard shortcut hint */}
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center">
+                        <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-white/5 border border-white/10 rounded text-muted-foreground">
+                            /
+                        </kbd>
+                    </div>
                 </div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full sm:w-40">

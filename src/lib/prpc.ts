@@ -447,18 +447,26 @@ async function batchGeoIpLookup(ips: string[]): Promise<Map<string, GeoIpResult>
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Result from fetching pNodes, includes source indicator for UI
+ */
+export interface FetchPNodesResult {
+    nodes: PNode[];
+    source: 'live' | 'mock';
+}
+
+/**
  * Fetch pNode data using a hybrid strategy:
  * 1. If XANDEUM_PRPC_URL is set, attempt real RPC fetch
  * 2. On failure, timeout, or missing env var, fall back to mock data
  * 3. Optionally resolve IP addresses to geographic coordinates
  *
- * @returns Array of PNode objects
+ * @returns Object with nodes array and source indicator
  */
-export async function fetchPNodes(): Promise<PNode[]> {
+export async function fetchPNodes(): Promise<FetchPNodesResult> {
     // If no RPC URL configured, use mock data immediately
     if (!PRPC_URL) {
         console.log('[prpc] No XANDEUM_PRPC_URL configured, using mock data');
-        return generateMockNodes();
+        return { nodes: generateMockNodes(), source: 'mock' };
     }
 
     try {
@@ -513,13 +521,14 @@ export async function fetchPNodes(): Promise<PNode[]> {
         const geoMap = await batchGeoIpLookup(ips);
 
         // Map RPC data to PNode interface with geo data
-        return data.result.map((rpcNode) => {
+        const nodes = data.result.map((rpcNode) => {
             const gossipParts = rpcNode.gossip?.split(':') ?? [];
             const rpcParts = rpcNode.rpc?.split(':') ?? [];
             const ip = gossipParts[0] || rpcParts[0];
             const geoData = ip ? geoMap.get(ip) : undefined;
             return mapRpcNodeToPNode(rpcNode, geoData);
         });
+        return { nodes, source: 'live' };
     } catch (error) {
         // Log the error and fall back to mock data
         if (error instanceof Error) {
@@ -532,7 +541,7 @@ export async function fetchPNodes(): Promise<PNode[]> {
             console.warn('[prpc] Unknown fetch error, using mock data');
         }
 
-        return generateMockNodes();
+        return { nodes: generateMockNodes(), source: 'mock' };
     }
 }
 
@@ -541,6 +550,6 @@ export async function fetchPNodes(): Promise<PNode[]> {
  * Falls back to mock data if not found or fetch fails.
  */
 export async function fetchPNodeByPubkey(pubkey: string): Promise<PNode | null> {
-    const nodes = await fetchPNodes();
-    return nodes.find((node) => node.pubkey === pubkey) ?? null;
+    const { nodes } = await fetchPNodes();
+    return nodes.find((node: PNode) => node.pubkey === pubkey) ?? null;
 }

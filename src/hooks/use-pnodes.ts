@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { PNode, PNodeSummaryStats } from '@/types/pnode';
 
+export type DataSource = 'live' | 'mock' | null;
+
 interface UsePNodesResult {
     nodes: PNode[];
     stats: PNodeSummaryStats;
@@ -10,6 +12,7 @@ interface UsePNodesResult {
     error: string | null;
     refetch: () => Promise<void>;
     lastUpdated: number | null;
+    dataSource: DataSource;
 }
 
 const EMPTY_STATS: PNodeSummaryStats = {
@@ -89,6 +92,7 @@ export function usePNodes(): UsePNodesResult {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+    const [dataSource, setDataSource] = useState<DataSource>(null);
 
     const fetchNodes = useCallback(async () => {
         setIsLoading(true);
@@ -103,6 +107,7 @@ export function usePNodes(): UsePNodesResult {
             }
 
             setNodes(data.data);
+            setDataSource(data.source || 'mock');
             setLastUpdated(Date.now());
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown error';
@@ -133,5 +138,6 @@ export function usePNodes(): UsePNodesResult {
         error,
         refetch: fetchNodes,
         lastUpdated,
+        dataSource,
     };
 }
