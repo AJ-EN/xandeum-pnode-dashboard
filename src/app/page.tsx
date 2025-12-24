@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePNodes } from '@/hooks/use-pnodes';
 import { StatsGrid } from '@/components/dashboard/stats-grid';
 import { NodeTable } from '@/components/dashboard/node-table';
@@ -25,6 +25,15 @@ function DashboardContent() {
     const [selectedNode, setSelectedNode] = useState<PNode | null>(null);
     const [sheetOpen, setSheetOpen] = useState(false);
     const [compareModalOpen, setCompareModalOpen] = useState(false);
+    const [now, setNow] = useState(() => Date.now());
+
+    // Update "now" every second so the "Updated X ago" display stays fresh
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setNow(Date.now());
+        }, 1000);
+        return () => clearInterval(interval);
+    }, []);
 
     const handleNodeSelect = (node: PNode) => {
         setSelectedNode(node);
@@ -37,7 +46,7 @@ function DashboardContent() {
 
     const formatLastUpdated = () => {
         if (!lastUpdated) return 'Never';
-        const seconds = Math.floor((Date.now() - lastUpdated) / 1000);
+        const seconds = Math.floor((now - lastUpdated) / 1000);
         if (seconds < 60) return `${seconds}s ago`;
         const minutes = Math.floor(seconds / 60);
         return `${minutes}m ago`;
