@@ -246,3 +246,84 @@ export interface PNodeSortOptions {
     field: PNodeSortField;
     direction: 'asc' | 'desc';
 }
+
+/**
+ * Network-wide status information from pRPC.
+ */
+export interface NetworkStatus {
+    /** Network health status */
+    health: 'ok' | 'degraded' | 'unknown';
+
+    /** Solana core version string */
+    version: string;
+
+    /** Feature set identifier */
+    featureSet: number;
+
+    /** Current epoch number */
+    epoch: number;
+
+    /** Current slot number */
+    slot: number;
+
+    /** Current block height */
+    blockHeight: number;
+
+    /** Epoch progress percentage (0-100) */
+    epochProgress: number;
+
+    /** Total slots in current epoch */
+    slotsInEpoch: number;
+
+    /** Total transaction count */
+    transactionCount: number;
+
+    /** Current TPS (transactions per second) */
+    tps: number;
+}
+
+/**
+ * Vote account information from getVoteAccounts RPC.
+ */
+export interface VoteAccountInfo {
+    /** Vote account public key */
+    votePubkey: string;
+
+    /** Node public key (identity) */
+    nodePubkey: string;
+
+    /** Activated stake in lamports */
+    activatedStake: number;
+
+    /** Commission percentage (0-100) */
+    commission: number;
+
+    /** Last vote slot */
+    lastVote: number;
+
+    /** Epoch credits earned */
+    epochCredits: number;
+
+    /** Whether this validator is delinquent */
+    delinquent: boolean;
+}
+
+/**
+ * Historical snapshot for localStorage tracking.
+ */
+export interface HistorySnapshot {
+    /** Timestamp of the snapshot */
+    timestamp: number;
+
+    /** Total node count */
+    nodeCount: number;
+
+    /** Online node count */
+    onlineCount: number;
+
+    /** Current TPS */
+    tps: number;
+
+    /** Current slot */
+    slot: number;
+}

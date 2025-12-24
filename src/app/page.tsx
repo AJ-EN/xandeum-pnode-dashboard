@@ -9,6 +9,9 @@ import { ActivityChart } from '@/components/dashboard/activity-chart';
 import { MapWrapper } from '@/components/dashboard/map-wrapper';
 import { VersionChart } from '@/components/dashboard/version-chart';
 import { RegionalStats } from '@/components/dashboard/regional-stats';
+import { NetworkStatusCard } from '@/components/dashboard/network-status';
+import { NodeComparisonModal } from '@/components/dashboard/node-comparison-modal';
+import { ComparisonProvider } from '@/context/comparison-context';
 import { Button } from '@/components/ui/button';
 import type { PNode } from '@/types/pnode';
 import {
@@ -17,10 +20,11 @@ import {
     Github,
 } from 'lucide-react';
 
-export default function Dashboard() {
-    const { nodes, stats, isLoading, error, refetch, lastUpdated, dataSource } = usePNodes();
+function DashboardContent() {
+    const { nodes, stats, networkStatus, isLoading, error, refetch, lastUpdated, dataSource } = usePNodes();
     const [selectedNode, setSelectedNode] = useState<PNode | null>(null);
     const [sheetOpen, setSheetOpen] = useState(false);
+    const [compareModalOpen, setCompareModalOpen] = useState(false);
 
     const handleNodeSelect = (node: PNode) => {
         setSelectedNode(node);
@@ -129,6 +133,9 @@ export default function Dashboard() {
                         </div>
                     )}
 
+                    {/* Network Status Bar */}
+                    <NetworkStatusCard status={networkStatus} isLoading={isLoading} />
+
                     {/* Stats Grid */}
                     <StatsGrid stats={stats} isLoading={isLoading} />
 
@@ -139,7 +146,7 @@ export default function Dashboard() {
                             isLoading={isLoading}
                             onNodeSelect={handleNodeSelect}
                         />
-                        <ActivityChart nodes={nodes} isLoading={isLoading} />
+                        <ActivityChart nodes={nodes} networkStatus={networkStatus} isLoading={isLoading} />
                     </div>
 
                     {/* Analytics Row: Version & Regional Distribution */}
@@ -155,6 +162,7 @@ export default function Dashboard() {
                             nodes={nodes}
                             isLoading={isLoading}
                             onNodeSelect={handleNodeSelect}
+                            onCompareClick={() => setCompareModalOpen(true)}
                         />
                     </div>
                 </main>
@@ -205,7 +213,21 @@ export default function Dashboard() {
                     open={sheetOpen}
                     onOpenChange={setSheetOpen}
                 />
+
+                {/* Node Comparison Modal */}
+                <NodeComparisonModal
+                    open={compareModalOpen}
+                    onOpenChange={setCompareModalOpen}
+                />
             </div>
         </>
+    );
+}
+
+export default function Dashboard() {
+    return (
+        <ComparisonProvider>
+            <DashboardContent />
+        </ComparisonProvider>
     );
 }

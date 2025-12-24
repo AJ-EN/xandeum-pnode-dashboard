@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { PNode, PNodeSummaryStats } from '@/types/pnode';
+import type { PNode, PNodeSummaryStats, NetworkStatus } from '@/types/pnode';
 
 export type DataSource = 'live' | 'mock' | null;
 
 interface UsePNodesResult {
     nodes: PNode[];
     stats: PNodeSummaryStats;
+    networkStatus: NetworkStatus | null;
     isLoading: boolean;
     error: string | null;
     refetch: () => Promise<void>;
@@ -89,6 +90,7 @@ function calculateStats(nodes: PNode[]): PNodeSummaryStats {
  */
 export function usePNodes(): UsePNodesResult {
     const [nodes, setNodes] = useState<PNode[]>([]);
+    const [networkStatus, setNetworkStatus] = useState<NetworkStatus | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<number | null>(null);
@@ -107,6 +109,7 @@ export function usePNodes(): UsePNodesResult {
             }
 
             setNodes(data.data);
+            setNetworkStatus(data.networkStatus || null);
             setDataSource(data.source || 'mock');
             setLastUpdated(Date.now());
         } catch (err) {
@@ -134,6 +137,7 @@ export function usePNodes(): UsePNodesResult {
     return {
         nodes,
         stats,
+        networkStatus,
         isLoading,
         error,
         refetch: fetchNodes,

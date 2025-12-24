@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
     AreaChart,
     Area,
@@ -11,10 +11,12 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import type { PNode } from '@/types/pnode';
+import type { PNode, NetworkStatus, HistorySnapshot } from '@/types/pnode';
+import { useHistory } from '@/hooks/use-history';
 
 interface ActivityChartProps {
     nodes: PNode[];
+    networkStatus: NetworkStatus | null;
     isLoading: boolean;
 }
 
@@ -24,16 +26,17 @@ interface CustomTooltipProps {
         name?: string;
         value?: number;
         color?: string;
+        dataKey?: string;
     }>;
     label?: string;
 }
 
-interface DataPoint {
+interface ChartDataPoint {
     time: string;
-    hour: number;
-    latency: number;
-    throughput: number;
-    nodes: number;
+    timestamp: number;
+    nodeCount: number;
+    onlineCount: number;
+    tps: number;
 }
 
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
@@ -50,7 +53,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
                     />
                     <span className="text-muted-foreground">{entry.name}:</span>
                     <span className="font-medium">
-                        {entry.name === 'Latency' ? `${entry.value}ms` : entry.value}
+                        {entry.dataKey === 'tps' ? `${entry.value} tx/s` : entry.value}
                     </span>
                 </div>
             ))}
@@ -58,64 +61,58 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
     );
 }
 
-/**
- * Generate simulated 24-hour activity data based on current node stats.
- * Since pNodes don't archive historical metrics, we simulate realistic patterns.
- */
-function generateActivityData(nodes: PNode[]): DataPoint[] {
-    const data: DataPoint[] = [];
-    const currentHour = new Date().getHours();
-    const onlineNodes = nodes.filter(n => n.status === 'online').length;
-
-    // Base latency from current performance data
-    const performingNodes = nodes.filter(n => n.performance?.avgLatencyMs);
-    const baseLatency = performingNodes.length > 0
-        ? performingNodes.reduce((sum, n) => sum + (n.performance?.avgLatencyMs || 0), 0) / performingNodes.length
-        : 50;
-
-    for (let i = 23; i >= 0; i--) {
-        const hour = (currentHour - i + 24) % 24;
-        const hourLabel = `${hour.toString().padStart(2, '0')}:00`;
-
-        // Simulate realistic daily patterns
-        // Peak hours: 10-14, 18-22 UTC (higher latency due to load)
-        // Low hours: 2-6 UTC (lower latency)
-        let loadMultiplier = 1;
-        if (hour >= 10 && hour <= 14) loadMultiplier = 1.3;
-        else if (hour >= 18 && hour <= 22) loadMultiplier = 1.4;
-        else if (hour >= 2 && hour <= 6) loadMultiplier = 0.7;
-
-        // Add some randomness for realism
-        const variance = (Math.random() - 0.5) * 20;
-        const latency = Math.max(10, Math.round(baseLatency * loadMultiplier + variance));
-
-        // Throughput inversely related to latency  
-        const throughput = Math.round((1000 / latency) * onlineNodes * (0.8 + Math.random() * 0.4));
-
-        // Slight variation in node count (some may go offline/online)
-        const nodeVariance = Math.floor((Math.random() - 0.5) * 3);
-        const nodesAtHour = Math.max(0, onlineNodes + nodeVariance);
-
-        data.push({
-            time: hourLabel,
-            hour,
-            latency,
-            throughput,
-            nodes: nodesAtHour,
-        });
-    }
-
-    return data;
+function formatTime(timestamp: number): string {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export function ActivityChart({ nodes, isLoading }: ActivityChartProps) {
-    const data = useMemo(() => generateActivityData(nodes), [nodes]);
+export function ActivityChart({ nodes, networkStatus, isLoading }: ActivityChartProps) {
+    const { history, addSnapshot, getRecentHistory } = useHistory();
+    const lastSnapshotRef = useRef<number>(0);
 
-    const avgLatency = data.length > 0
-        ? Math.round(data.reduce((sum, d) => sum + d.latency, 0) / data.length)
+    // Add snapshot when data updates (throttled to once per refresh cycle)
+    useEffect(() => {
+        if (nodes.length === 0 || isLoading) return;
+
+        const now = Date.now();
+        // Only add snapshot if at least 25 seconds have passed (allowing for slight timing variations)
+        if (now - lastSnapshotRef.current < 25000) return;
+
+        const onlineCount = nodes.filter((n) => n.status === 'online').length;
+
+        addSnapshot({
+            nodeCount: nodes.length,
+            onlineCount,
+            tps: networkStatus?.tps ?? 0,
+            slot: networkStatus?.slot ?? 0,
+        });
+
+        lastSnapshotRef.current = now;
+    }, [nodes, networkStatus, isLoading, addSnapshot]);
+
+    // Get recent history for chart (last 60 data points = ~30 minutes)
+    const chartData: ChartDataPoint[] = useMemo(() => {
+        const recent = getRecentHistory(60);
+
+        if (recent.length === 0) {
+            // No history yet - return empty for "collecting data" state
+            return [];
+        }
+
+        return recent.map((snapshot: HistorySnapshot) => ({
+            time: formatTime(snapshot.timestamp),
+            timestamp: snapshot.timestamp,
+            nodeCount: snapshot.nodeCount,
+            onlineCount: snapshot.onlineCount,
+            tps: snapshot.tps,
+        }));
+    }, [getRecentHistory, history]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const hasRealData = chartData.length > 1;
+    const currentTps = networkStatus?.tps ?? 0;
+    const avgTps = chartData.length > 0
+        ? Math.round(chartData.reduce((sum, d) => sum + d.tps, 0) / chartData.length)
         : 0;
-
-    const currentLatency = data.length > 0 ? data[data.length - 1].latency : 0;
 
     return (
         <Card className="glass-card animate-fade-in-up animate-delay-4">
@@ -124,26 +121,40 @@ export function ActivityChart({ nodes, isLoading }: ActivityChartProps) {
                     <div>
                         <div className="flex items-center gap-2">
                             <CardTitle className="text-base font-medium">Network Activity</CardTitle>
-                            <span
-                                className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
-                                title="pNodes don't archive historical metrics. This chart shows projected trends based on current network state."
-                            >
-                                SIMULATED
-                            </span>
+                            {hasRealData ? (
+                                <span
+                                    className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-green-500/10 text-green-500 border border-green-500/20"
+                                    title="Real historical data from your session"
+                                >
+                                    REAL DATA
+                                </span>
+                            ) : (
+                                <span
+                                    className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                                    title="Collecting data points - chart will populate over time"
+                                >
+                                    COLLECTING
+                                </span>
+                            )}
                         </div>
                         <CardDescription className="text-xs">
-                            Projected 24h trends based on real-time snapshot
+                            {hasRealData
+                                ? `Last ${chartData.length} snapshots (updates every 30s)`
+                                : 'Data points will appear as the page remains open'
+                            }
                         </CardDescription>
                     </div>
                     <div className="flex gap-4 text-right">
                         <div>
-                            <p className="text-xs text-muted-foreground">Current</p>
-                            <p className="text-lg font-semibold">{currentLatency}ms</p>
+                            <p className="text-xs text-muted-foreground">Current TPS</p>
+                            <p className="text-lg font-semibold text-yellow-400">{currentTps}</p>
                         </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground">Projected Avg</p>
-                            <p className="text-lg font-semibold text-muted-foreground">{avgLatency}ms</p>
-                        </div>
+                        {hasRealData && (
+                            <div>
+                                <p className="text-xs text-muted-foreground">Avg TPS</p>
+                                <p className="text-lg font-semibold text-muted-foreground">{avgTps}</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </CardHeader>
@@ -154,14 +165,26 @@ export function ActivityChart({ nodes, isLoading }: ActivityChartProps) {
                             Loading chart data...
                         </div>
                     </div>
+                ) : !hasRealData ? (
+                    <div className="h-[200px] flex flex-col items-center justify-center gap-2">
+                        <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                        <p className="text-sm text-muted-foreground">Collecting data points...</p>
+                        <p className="text-xs text-muted-foreground/60">
+                            Keep this page open to see real network trends
+                        </p>
+                    </div>
                 ) : (
                     <div className="h-[200px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <defs>
-                                    <linearGradient id="latencyGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <linearGradient id="tpsGradient" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#00D4AA" stopOpacity={0.3} />
                                         <stop offset="95%" stopColor="#00D4AA" stopOpacity={0} />
+                                    </linearGradient>
+                                    <linearGradient id="nodesGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
+                                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid
@@ -175,25 +198,46 @@ export function ActivityChart({ nodes, isLoading }: ActivityChartProps) {
                                     tickLine={false}
                                     tick={{ fill: 'rgba(161, 161, 170, 0.6)', fontSize: 10 }}
                                     interval="preserveStartEnd"
-                                    tickFormatter={(value) => value.split(':')[0]}
                                 />
                                 <YAxis
+                                    yAxisId="tps"
                                     axisLine={false}
                                     tickLine={false}
                                     tick={{ fill: 'rgba(161, 161, 170, 0.6)', fontSize: 10 }}
-                                    tickFormatter={(value) => `${value}ms`}
-                                    domain={['dataMin - 10', 'dataMax + 10']}
+                                    tickFormatter={(value) => `${value}`}
+                                    domain={['dataMin - 5', 'dataMax + 5']}
+                                />
+                                <YAxis
+                                    yAxisId="nodes"
+                                    orientation="right"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: 'rgba(161, 161, 170, 0.4)', fontSize: 10 }}
+                                    domain={[0, 'dataMax + 2']}
+                                    hide
                                 />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Area
+                                    yAxisId="tps"
                                     type="monotone"
-                                    dataKey="latency"
-                                    name="Latency"
+                                    dataKey="tps"
+                                    name="TPS"
                                     stroke="#00D4AA"
                                     strokeWidth={2}
-                                    fill="url(#latencyGradient)"
+                                    fill="url(#tpsGradient)"
                                     dot={false}
                                     activeDot={{ r: 4, fill: '#00D4AA', stroke: '#fff', strokeWidth: 2 }}
+                                />
+                                <Area
+                                    yAxisId="nodes"
+                                    type="monotone"
+                                    dataKey="onlineCount"
+                                    name="Online Nodes"
+                                    stroke="#f59e0b"
+                                    strokeWidth={1}
+                                    strokeDasharray="4 4"
+                                    fill="url(#nodesGradient)"
+                                    dot={false}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>

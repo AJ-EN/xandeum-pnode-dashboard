@@ -12,6 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
     SelectContent,
@@ -19,6 +20,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useComparison } from '@/context/comparison-context';
 import type { PNode, PNodeStatus } from '@/types/pnode';
 import {
     Search,
@@ -27,12 +29,14 @@ import {
     Copy,
     Check,
     ExternalLink,
+    GitCompare,
 } from 'lucide-react';
 
 interface NodeTableProps {
     nodes: PNode[];
     isLoading: boolean;
     onNodeSelect: (node: PNode) => void;
+    onCompareClick: () => void;
 }
 
 type SortField = 'status' | 'pubkey' | 'region' | 'version' | 'healthScore';
@@ -101,7 +105,8 @@ function HealthBar({ score }: { score: number }) {
     );
 }
 
-export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
+export function NodeTable({ nodes, isLoading, onNodeSelect, onCompareClick }: NodeTableProps) {
+    const { isSelected, toggleNode, count, canAddMore } = useComparison();
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [versionFilter, setVersionFilter] = useState<string>('all');
@@ -247,6 +252,16 @@ export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
                         ))}
                     </SelectContent>
                 </Select>
+                {count > 0 && (
+                    <Button
+                        onClick={onCompareClick}
+                        className="gap-2"
+                        size="sm"
+                    >
+                        <GitCompare className="h-4 w-4" />
+                        Compare ({count})
+                    </Button>
+                )}
             </div>
 
             {/* Table */}
@@ -254,6 +269,9 @@ export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
                 <Table>
                     <TableHeader>
                         <TableRow className="hover:bg-transparent border-b border-white/5">
+                            <TableHead className="w-10">
+                                <span className="sr-only">Compare</span>
+                            </TableHead>
                             <TableHead
                                 className="cursor-pointer select-none hover:text-foreground transition-colors"
                                 onClick={() => handleSort('status')}
@@ -302,6 +320,7 @@ export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
                         {isLoading ? (
                             Array.from({ length: 10 }).map((_, i) => (
                                 <TableRow key={i}>
+                                    <TableCell><Skeleton className="h-4 w-4 rounded" /></TableCell>
                                     <TableCell><Skeleton className="h-6 w-20" /></TableCell>
                                     <TableCell><Skeleton className="h-6 w-32" /></TableCell>
                                     <TableCell><Skeleton className="h-6 w-28" /></TableCell>
@@ -313,7 +332,7 @@ export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
                             ))
                         ) : filteredNodes.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                                     No nodes found matching your filters
                                 </TableCell>
                             </TableRow>
@@ -324,6 +343,14 @@ export function NodeTable({ nodes, isLoading, onNodeSelect }: NodeTableProps) {
                                     onClick={() => onNodeSelect(node)}
                                     className="cursor-pointer hover:bg-white/5 transition-colors"
                                 >
+                                    <TableCell onClick={(e) => e.stopPropagation()}>
+                                        <Checkbox
+                                            checked={isSelected(node.pubkey)}
+                                            onCheckedChange={() => toggleNode(node.pubkey, node)}
+                                            disabled={!canAddMore && !isSelected(node.pubkey)}
+                                            className="data-[state=checked]:bg-primary"
+                                        />
+                                    </TableCell>
                                     <TableCell>
                                         <StatusBadge status={node.status} />
                                     </TableCell>

@@ -1,4 +1,4 @@
-import type { PNode, PNodeStatus } from '@/types/pnode';
+import type { PNode, PNodeStatus, NetworkStatus, VoteAccountInfo } from '@/types/pnode';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration
@@ -553,3 +553,218 @@ export async function fetchPNodeByPubkey(pubkey: string): Promise<PNode | null> 
     const { nodes } = await fetchPNodes();
     return nodes.find((node: PNode) => node.pubkey === pubkey) ?? null;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Network Status Fetching
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface PerformanceSample {
+    numSlots: number;
+    numTransactions: number;
+    samplePeriodSecs: number;
+    slot: number;
+}
+
+/**
+ * Generate mock network status for fallback
+ */
+function generateMockNetworkStatus(): NetworkStatus {
+    const epoch = 210;
+    const slotsInEpoch = 432000;
+    const slotIndex = Math.floor(Math.random() * slotsInEpoch);
+
+    return {
+        health: 'ok',
+        version: '2.2.0-mock',
+        featureSet: 3294202862,
+        epoch,
+        slot: epoch * slotsInEpoch + slotIndex,
+        blockHeight: 82000000 + Math.floor(Math.random() * 100000),
+        epochProgress: (slotIndex / slotsInEpoch) * 100,
+        slotsInEpoch,
+        transactionCount: 1500000000 + Math.floor(Math.random() * 50000000),
+        tps: 1500 + Math.floor(Math.random() * 700), // 1500-2200 TPS
+    };
+}
+
+/**
+ * Fetch comprehensive network status from multiple RPC methods.
+ * Combines getHealth, getVersion, getEpochInfo, and getRecentPerformanceSamples.
+ */
+export async function fetchNetworkStatus(): Promise<{ status: NetworkStatus; source: 'live' | 'mock' }> {
+    if (!PRPC_URL) {
+        console.log('[prpc] No XANDEUM_PRPC_URL configured, using mock network status');
+        return { status: generateMockNetworkStatus(), source: 'mock' };
+    }
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+        // Make parallel requests for all status endpoints
+        const [healthRes, versionRes, epochRes, perfRes] = await Promise.all([
+            fetch(PRPC_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getHealth', params: [] }),
+                signal: controller.signal,
+            }),
+            fetch(PRPC_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'getVersion', params: [] }),
+                signal: controller.signal,
+            }),
+            fetch(PRPC_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'getEpochInfo', params: [] }),
+                signal: controller.signal,
+            }),
+            fetch(PRPC_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ jsonrpc: '2.0', id: 4, method: 'getRecentPerformanceSamples', params: [10] }),
+                signal: controller.signal,
+            }),
+        ]);
+
+        clearTimeout(timeoutId);
+
+        const [healthData, versionData, epochData, perfSamplesData] = await Promise.all([
+            healthRes.json() as Promise<RpcResponse<string>>,
+            versionRes.json() as Promise<RpcResponse<{ 'solana-core': string; 'feature-set': number }>>,
+            epochRes.json() as Promise<RpcResponse<{
+                absoluteSlot: number;
+                blockHeight: number;
+                epoch: number;
+                slotIndex: number;
+                slotsInEpoch: number;
+                transactionCount: number;
+            }>>,
+            perfRes.json() as Promise<RpcResponse<PerformanceSample[]>>,
+        ]);
+
+        // Calculate TPS from performance samples
+        let tps = 0;
+        if (perfSamplesData.result && Array.isArray(perfSamplesData.result) && perfSamplesData.result.length > 0) {
+            const samples = perfSamplesData.result;
+            const totalTx = samples.reduce((sum: number, s: PerformanceSample) => sum + s.numTransactions, 0);
+            const totalTime = samples.reduce((sum: number, s: PerformanceSample) => sum + s.samplePeriodSecs, 0);
+            tps = totalTime > 0 ? Math.round(totalTx / totalTime) : 0;
+        }
+
+        const status: NetworkStatus = {
+            health: healthData.result === 'ok' ? 'ok' : 'degraded',
+            version: versionData.result?.['solana-core'] ?? 'unknown',
+            featureSet: versionData.result?.['feature-set'] ?? 0,
+            epoch: epochData.result?.epoch ?? 0,
+            slot: epochData.result?.absoluteSlot ?? 0,
+            blockHeight: epochData.result?.blockHeight ?? 0,
+            epochProgress: epochData.result
+                ? (epochData.result.slotIndex / epochData.result.slotsInEpoch) * 100
+                : 0,
+            slotsInEpoch: epochData.result?.slotsInEpoch ?? 432000,
+            transactionCount: epochData.result?.transactionCount ?? 0,
+            tps,
+        };
+
+        console.log(`[prpc] Network status: epoch ${status.epoch}, slot ${status.slot}, TPS ${status.tps}`);
+        return { status, source: 'live' };
+    } catch (error) {
+        console.warn('[prpc] Failed to fetch network status:', error);
+        return { status: generateMockNetworkStatus(), source: 'mock' };
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Vote Accounts Fetching
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface RpcVoteAccount {
+    votePubkey: string;
+    nodePubkey: string;
+    activatedStake: number;
+    commission: number;
+    lastVote: number;
+    epochCredits: [number, number, number][];
+    epochVoteAccount: boolean;
+    rootSlot: number;
+}
+
+/**
+ * Fetch vote accounts to get real staking information for nodes.
+ */
+export async function fetchVoteAccounts(): Promise<{ accounts: VoteAccountInfo[]; source: 'live' | 'mock' }> {
+    if (!PRPC_URL) {
+        return { accounts: [], source: 'mock' };
+    }
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+        const response = await fetch(PRPC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getVoteAccounts', params: [] }),
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const data: RpcResponse<{ current: RpcVoteAccount[]; delinquent: RpcVoteAccount[] }> = await response.json();
+
+        if (data.error || !data.result) {
+            throw new Error(data.error?.message || 'Invalid response');
+        }
+
+        const mapAccount = (acc: RpcVoteAccount, delinquent: boolean): VoteAccountInfo => ({
+            votePubkey: acc.votePubkey,
+            nodePubkey: acc.nodePubkey,
+            activatedStake: acc.activatedStake,
+            commission: acc.commission,
+            lastVote: acc.lastVote,
+            epochCredits: acc.epochCredits.length > 0
+                ? acc.epochCredits[acc.epochCredits.length - 1][1]
+                : 0,
+            delinquent,
+        });
+
+        const accounts = [
+            ...data.result.current.map((acc) => mapAccount(acc, false)),
+            ...data.result.delinquent.map((acc) => mapAccount(acc, true)),
+        ];
+
+        console.log(`[prpc] Fetched ${accounts.length} vote accounts (${data.result.delinquent.length} delinquent)`);
+        return { accounts, source: 'live' };
+    } catch (error) {
+        console.warn('[prpc] Failed to fetch vote accounts:', error);
+        return { accounts: [], source: 'mock' };
+    }
+}
+
+/**
+ * Enrich pNodes with vote account stake data by matching nodePubkey.
+ */
+export function enrichNodesWithVoteAccounts(nodes: PNode[], voteAccounts: VoteAccountInfo[]): PNode[] {
+    const voteMap = new Map(voteAccounts.map((v) => [v.nodePubkey, v]));
+
+    return nodes.map((node) => {
+        const voteAccount = voteMap.get(node.pubkey);
+        if (voteAccount) {
+            return {
+                ...node,
+                stake: {
+                    stakedAmount: voteAccount.activatedStake,
+                    commissionRate: voteAccount.commission,
+                    delegationEligible: !voteAccount.delinquent,
+                },
+                // Update status based on delinquency
+                status: voteAccount.delinquent ? 'degraded' : node.status,
+            };
+        }
+        return node;
+    });
+}
+
