@@ -73,10 +73,10 @@
 <td width="50%">
 
 ### 📈 Activity Chart
-- 24-hour latency trends (simulated)
-- Current vs average comparison
-- Gradient area visualization
-- Custom tooltips with details
+- **Real historical data** from localStorage
+- TPS and online node count tracking
+- Persists across page refreshes
+- Updates every 30 seconds
 
 </td>
 <td width="50%">
@@ -121,6 +121,26 @@ Comprehensive slide-out panel showing:
 
 </td>
 </tr>
+<tr>
+<td width="50%">
+
+### 🔗 Node Comparison
+- Select up to 4 nodes to compare
+- Side-by-side modal view
+- Compare status, version, stake, region
+- Best/worst value highlighting
+
+</td>
+<td width="50%">
+
+### 📡 Network Status Bar
+- Real-time epoch & slot tracking
+- Live TPS from performance samples
+- Block height & transaction count
+- Network health indicator (OK/Degraded)
+
+</td>
+</tr>
 </table>
 
 ### Bonus Features
@@ -134,6 +154,8 @@ Comprehensive slide-out panel showing:
 | 📱 **Responsive** | Works on desktop, tablet, and mobile |
 | ⌨️ **Keyboard Shortcuts** | Press `/` to focus search from anywhere |
 | ✨ **Premium Effects** | Aurora background, glassmorphism, animations |
+| 📊 **Real Stake Data** | Validator stakes from `getVoteAccounts` RPC |
+| 🕐 **localStorage History** | Chart data persists across sessions |
 
 ---
 
@@ -228,10 +250,16 @@ src/
 │       ├── node-detail-sheet.tsx # Slide-out details
 │       ├── activity-chart.tsx   # Recharts visualization
 │       ├── network-map.tsx      # Leaflet world map
-│       └── map-wrapper.tsx      # SSR-safe loader
+│       ├── map-wrapper.tsx      # SSR-safe loader
+│       ├── network-status.tsx   # Network status bar (NEW)
+│       └── node-comparison-modal.tsx # Compare nodes (NEW)
+│
+├── context/
+│   └── comparison-context.tsx # Node comparison state (NEW)
 │
 ├── hooks/
-│   └── use-pnodes.ts        # Auto-refresh data hook
+│   ├── use-pnodes.ts        # Auto-refresh data hook
+│   └── use-history.ts       # localStorage history (NEW)
 │
 ├── lib/
 │   ├── prpc.ts              # pRPC client + GeoIP
@@ -285,19 +313,41 @@ Returns all pNodes currently visible in network gossip.
         "version": "2.2.0-7c3f39e8",
         "featureSet": 3294202862,
         "shredVersion": 48698
+      },
+      "stake": {
+        "stakedAmount": 4470000000000,
+        "commissionRate": 6,
+        "delegationEligible": true
       }
     }
   ],
   "count": 17,
+  "source": "live",
+  "networkStatus": {
+    "health": "ok",
+    "version": "2.2.0-7c3f39e8",
+    "epoch": 210,
+    "slot": 88414124,
+    "blockHeight": 82096885,
+    "epochProgress": 40.2,
+    "tps": 32,
+    "transactionCount": 1567000000
+  },
+  "voteAccountCount": 15,
   "timestamp": 1703253000000
 }
 ```
 
-### pRPC Methods Used
+### pRPC Methods Integrated
 
 | Method | Purpose |
 |--------|---------|
 | `getClusterNodes` | Fetch all nodes in gossip |
+| `getHealth` | Network health status (ok/degraded) |
+| `getVersion` | Solana core version info |
+| `getEpochInfo` | Current epoch, slot, block height |
+| `getVoteAccounts` | Validator stake & commission data |
+| `getRecentPerformanceSamples` | Calculate real TPS |
 
 ---
 
