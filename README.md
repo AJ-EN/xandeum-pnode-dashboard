@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./public/screenshots/dashboard.png" alt="Xandeum Network Monitor" width="100%" />
+  <img src="./public/screenshots/image1.png" alt="Xandeum Network Monitor" width="100%" />
   <h1>🚀 Xandeum Network Monitor</h1>
   <p><strong>The Premier Analytics Dashboard for Xandeum pNodes</strong></p>
   <p>Real-time monitoring • Global distribution mapping • Deep node analytics</p>
@@ -163,15 +163,23 @@ Comprehensive slide-out panel showing:
 
 <table>
 <tr>
-<td>
-<img src="./public/screenshots/dashboard.png" alt="Main Dashboard" width="100%"/>
-<p align="center"><em>Main Dashboard with Stats, Map & Chart</em></p>
+<td width="50%">
+<img src="./public/screenshots/image1.png" alt="Dashboard Overview" width="100%"/>
+<p align="center"><em>Dashboard Overview</em></p>
+</td>
+<td width="50%">
+<img src="./public/screenshots/image2.png" alt="Network Map" width="100%"/>
+<p align="center"><em>Network Map & Analytics</em></p>
 </td>
 </tr>
 <tr>
-<td>
-<img src="./public/screenshots/node.png" alt="Node Detail" width="100%"/>
-<p align="center"><em>Node Detail Sheet with Full Analytics</em></p>
+<td width="50%">
+<img src="./public/screenshots/image3.png" alt="Node Details" width="100%"/>
+<p align="center"><em>Node Details & Stats</em></p>
+</td>
+<td width="50%">
+<img src="./public/screenshots/image4.png" alt="Node Comparison" width="100%"/>
+<p align="center"><em>Node Comparison View</em></p>
 </td>
 </tr>
 </table>
