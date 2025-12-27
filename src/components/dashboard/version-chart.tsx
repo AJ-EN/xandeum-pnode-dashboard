@@ -33,7 +33,7 @@ interface VersionData {
     name: string;
     count: number;
     percentage: number;
-    [key: string]: string | number; // Index signature for recharts
+    [key: string]: string | number;
 }
 
 interface CustomTooltipProps {
@@ -67,7 +67,6 @@ export function VersionChart({ nodes, isLoading }: VersionChartProps) {
 
         for (const node of nodes) {
             const version = node.versionInfo?.version || 'Unknown';
-            // Simplify version string for grouping
             const simpleVersion = version.split('-')[0] || version;
             versionCounts.set(simpleVersion, (versionCounts.get(simpleVersion) || 0) + 1);
         }
@@ -80,7 +79,7 @@ export function VersionChart({ nodes, isLoading }: VersionChartProps) {
                 percentage: total > 0 ? Math.round((count / total) * 100) : 0,
             }))
             .sort((a, b) => b.count - a.count)
-            .slice(0, 8); // Limit to top 8 versions
+            .slice(0, 8);
 
         return data;
     }, [nodes]);
@@ -88,36 +87,32 @@ export function VersionChart({ nodes, isLoading }: VersionChartProps) {
     const uniqueVersions = versionData.length;
 
     return (
-        <Card className="glass-card animate-fade-in-up animate-delay-5">
-            <CardHeader className="pb-2">
+        <Card className="glass-card animate-fade-in-up animate-delay-5 h-[320px] flex flex-col">
+            <CardHeader className="pb-2 flex-shrink-0">
                 <CardTitle className="text-base font-medium">Version Distribution</CardTitle>
                 <CardDescription className="text-xs">
-                    {uniqueVersions} unique version{uniqueVersions !== 1 ? 's' : ''} across {nodes.length} nodes
+                    {uniqueVersions} version{uniqueVersions !== 1 ? 's' : ''} across {nodes.length} nodes
                 </CardDescription>
             </CardHeader>
-            <CardContent className="pt-2">
+            <CardContent className="flex-1 flex items-center justify-center pt-0">
                 {isLoading ? (
-                    <div className="h-[200px] flex items-center justify-center">
-                        <div className="animate-pulse text-muted-foreground text-sm">
-                            Loading version data...
-                        </div>
+                    <div className="animate-pulse text-muted-foreground text-sm">
+                        Loading version data...
                     </div>
                 ) : versionData.length === 0 ? (
-                    <div className="h-[200px] flex items-center justify-center">
-                        <div className="text-muted-foreground text-sm">
-                            No version data available
-                        </div>
+                    <div className="text-muted-foreground text-sm text-center">
+                        No version data available
                     </div>
                 ) : (
-                    <div className="h-[200px] w-full">
+                    <div className="w-full h-full max-h-[220px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
                                     data={versionData}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={45}
-                                    outerRadius={70}
+                                    innerRadius={40}
+                                    outerRadius={65}
                                     paddingAngle={2}
                                     dataKey="count"
                                     nameKey="name"
