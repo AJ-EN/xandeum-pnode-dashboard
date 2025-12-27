@@ -30,7 +30,9 @@ import {
     Check,
     ExternalLink,
     GitCompare,
+    Download,
 } from 'lucide-react';
+import { exportToCSV } from '@/lib/export-utils';
 
 interface NodeTableProps {
     nodes: PNode[];
@@ -255,13 +257,23 @@ export function NodeTable({ nodes, isLoading, onNodeSelect, onCompareClick }: No
                 {count > 0 && (
                     <Button
                         onClick={onCompareClick}
-                        className="gap-2"
+                        className="gap-2 bg-primary hover:bg-primary/90"
                         size="sm"
                     >
                         <GitCompare className="h-4 w-4" />
                         Compare ({count})
                     </Button>
                 )}
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => exportToCSV(nodes)}
+                    className="gap-2"
+                    title="Export all nodes to CSV"
+                >
+                    <Download className="h-4 w-4" />
+                    <span className="hidden sm:inline">Export CSV</span>
+                </Button>
             </div>
 
             {/* Table */}
@@ -270,7 +282,12 @@ export function NodeTable({ nodes, isLoading, onNodeSelect, onCompareClick }: No
                     <TableHeader>
                         <TableRow className="hover:bg-transparent border-b border-white/5">
                             <TableHead className="w-10">
-                                <span className="sr-only">Compare</span>
+                                <span
+                                    className="text-[10px] text-muted-foreground font-normal"
+                                    title="Select nodes to compare (max 4)"
+                                >
+                                    ⚖️
+                                </span>
                             </TableHead>
                             <TableHead
                                 className="cursor-pointer select-none hover:text-foreground transition-colors"

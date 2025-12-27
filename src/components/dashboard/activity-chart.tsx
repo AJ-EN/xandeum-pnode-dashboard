@@ -66,6 +66,38 @@ function formatTime(timestamp: number): string {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+/**
+ * Generate simulated historical data for the "last 30 minutes".
+ * This provides a populated chart on first visit instead of empty state.
+ */
+function generateSimulatedHistory(
+    currentNodeCount: number,
+    currentOnlineCount: number,
+    currentTps: number
+): ChartDataPoint[] {
+    const now = Date.now();
+    const points: ChartDataPoint[] = [];
+    const numPoints = 30; // 30 points = ~15 minutes of simulated history at 30s intervals
+
+    for (let i = numPoints - 1; i >= 0; i--) {
+        const timestamp = now - i * 30000; // 30 seconds apart
+        // Add variance: ±15% for TPS, ±1-2 for node counts
+        const tpsVariance = currentTps * (0.85 + Math.random() * 0.3);
+        const nodeVariance = Math.floor(Math.random() * 3) - 1;
+        const onlineVariance = Math.floor(Math.random() * 3) - 1;
+
+        points.push({
+            time: formatTime(timestamp),
+            timestamp,
+            nodeCount: Math.max(1, currentNodeCount + nodeVariance),
+            onlineCount: Math.max(1, Math.min(currentNodeCount, currentOnlineCount + onlineVariance)),
+            tps: Math.max(0, Math.round(tpsVariance)),
+        });
+    }
+
+    return points;
+}
+
 export function ActivityChart({ nodes, networkStatus, isLoading }: ActivityChartProps) {
     const { history, addSnapshot, getRecentHistory } = useHistory();
     const lastSnapshotRef = useRef<number>(0);
@@ -94,9 +126,14 @@ export function ActivityChart({ nodes, networkStatus, isLoading }: ActivityChart
     const chartData: ChartDataPoint[] = useMemo(() => {
         const recent = getRecentHistory(60);
 
-        if (recent.length === 0) {
-            // No history yet - return empty for "collecting data" state
-            return [];
+        if (recent.length < 3 && nodes.length > 0) {
+            // Not enough real history - show simulated data
+            const onlineCount = nodes.filter((n) => n.status === 'online').length;
+            return generateSimulatedHistory(
+                nodes.length,
+                onlineCount,
+                networkStatus?.tps ?? 30
+            );
         }
 
         return recent.map((snapshot: HistorySnapshot) => ({
@@ -106,9 +143,10 @@ export function ActivityChart({ nodes, networkStatus, isLoading }: ActivityChart
             onlineCount: snapshot.onlineCount,
             tps: snapshot.tps,
         }));
-    }, [getRecentHistory, history]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [getRecentHistory, history, nodes, networkStatus?.tps]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const hasRealData = chartData.length > 1;
+    const hasRealData = history.length >= 3;
+    const isSimulated = !hasRealData && chartData.length > 0;
     const currentTps = networkStatus?.tps ?? 0;
     const avgTps = chartData.length > 0
         ? Math.round(chartData.reduce((sum, d) => sum + d.tps, 0) / chartData.length)
@@ -128,6 +166,13 @@ export function ActivityChart({ nodes, networkStatus, isLoading }: ActivityChart
                                 >
                                     REAL DATA
                                 </span>
+                            ) : isSimulated ? (
+                                <span
+                                    className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                                    title="Simulated trend data - real data will replace this as it collects"
+                                >
+                                    SIMULATED
+                                </span>
                             ) : (
                                 <span
                                     className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-blue-500/10 text-blue-500 border border-blue-500/20"
@@ -140,7 +185,9 @@ export function ActivityChart({ nodes, networkStatus, isLoading }: ActivityChart
                         <CardDescription className="text-xs">
                             {hasRealData
                                 ? `Last ${chartData.length} snapshots (updates every 30s)`
-                                : 'Data points will appear as the page remains open'
+                                : isSimulated
+                                    ? 'Showing projected trends • Real data will appear shortly'
+                                    : 'Data points will appear as the page remains open'
                             }
                         </CardDescription>
                     </div>

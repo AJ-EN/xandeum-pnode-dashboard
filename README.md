@@ -73,12 +73,23 @@
 <td width="50%">
 
 ### 📈 Activity Chart
+- **Pre-seeded simulated data** on first visit
 - **Real historical data** from localStorage
 - TPS and online node count tracking
-- Persists across page refreshes
-- Updates every 30 seconds
+- Auto-switches from SIMULATED → REAL DATA
 
 </td>
+<td width="50%">
+
+### 🏆 Top Staked Leaderboard
+- Top 10 staked nodes ranking
+- Gold/Silver/Bronze rank badges
+- Network stake share percentages
+- Click to view node details
+
+</td>
+</tr>
+<tr>
 <td width="50%">
 
 ### 🥧 Version Distribution
@@ -87,8 +98,6 @@
 - Helps identify upgrade status
 
 </td>
-</tr>
-<tr>
 <td width="50%">
 
 ### 🌐 Regional Analytics
@@ -97,27 +106,24 @@
 - Visual bar chart breakdown
 
 </td>
+</tr>
+<tr>
 <td width="50%">
 
 ### 📋 Node Directory
 - Sortable by any column
 - Filter by status & version
 - Full-text search with `/` shortcut
-- Click for deep-dive details
+- **Export to CSV** for data analysis
 
 </td>
-</tr>
-<tr>
-<td colspan="2">
+<td width="50%">
 
 ### 🔍 Node Detail Sheet
-Comprehensive slide-out panel showing:
-- **Identity**: Pubkey, operator name, wallet
-- **Network**: Host, ports, region, coordinates
-- **Storage**: Capacity, usage, shards, pods
-- **Stake**: Amount, commission, eligibility
-- **Performance**: Uptime, latency, retrievals
-- **Raw JSON**: Full data for developers
+- Identity, Network, Storage, Stake sections
+- Performance metrics & timestamps
+- Raw JSON for developers
+- Click any node to view details
 
 </td>
 </tr>
@@ -126,9 +132,9 @@ Comprehensive slide-out panel showing:
 
 ### 🔗 Node Comparison
 - Select up to 4 nodes to compare
-- Side-by-side modal view
-- Compare status, version, stake, region
-- Best/worst value highlighting
+- Discoverable ⚖️ column header
+- Prominent "Compare (N)" button
+- Side-by-side modal with highlighting
 
 </td>
 <td width="50%">
@@ -149,6 +155,7 @@ Comprehensive slide-out panel showing:
 |---------|-------------|
 | ⚡ **Auto-Refresh** | Data updates every 30 seconds automatically |
 | 🟢 **Live/Demo Indicator** | Shows connection status (🟢 Live or 🟡 Demo) |
+| 📥 **CSV Export** | Export all node data for analysis or reporting |
 | 🌙 **Dark Theme** | Premium dark aesthetic matching Solana ecosystem |
 | 🛡️ **Resilient Mode** | Graceful fallback to mock data if RPC fails |
 | 📱 **Responsive** | Works on desktop, tablet, and mobile |
@@ -389,13 +396,17 @@ Returns all pNodes currently visible in network gossip.
 
 1. **GeoIP Enrichment** — Automatically resolves node IPs to geographic coordinates using ip-api.com batch endpoint, enabling the interactive world map
 
-2. **Resilient Architecture** — If API fails, dashboard gracefully falls back to realistic mock data, ensuring it always works for demos
+2. **Pre-Seeded Activity Chart** — New visitors see a populated chart immediately (labeled "SIMULATED") that transitions to real data as it accumulates
 
-3. **Premium UX** — Aurora gradient background, glassmorphism cards, staggered animations, and a polished dark theme
+3. **Top Staked Leaderboard** — Prominently displays stake data from `getVoteAccounts` with gold/silver/bronze rank badges
 
-4. **Real-Time Updates** — Auto-refresh every 30 seconds with visual loading states
+4. **CSV Export** — Enterprise-ready data export for external analysis and reporting
 
-5. **Deep Analytics** — Click any node to see comprehensive details including raw JSON for developers
+5. **Enhanced Node Comparison** — Improved discoverability with ⚖️ column header and prominent Compare button
+
+6. **Resilient Architecture** — If API fails, dashboard gracefully falls back to realistic mock data, ensuring it always works for demos
+
+7. **Premium UX** — Aurora gradient background, glassmorphism cards, staggered animations, and a polished dark theme
 
 ### 🔍 Technical Notes
 

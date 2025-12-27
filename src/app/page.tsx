@@ -11,6 +11,7 @@ import { VersionChart } from '@/components/dashboard/version-chart';
 import { RegionalStats } from '@/components/dashboard/regional-stats';
 import { NetworkStatusCard } from '@/components/dashboard/network-status';
 import { NodeComparisonModal } from '@/components/dashboard/node-comparison-modal';
+import { StakedLeaderboard } from '@/components/dashboard/staked-leaderboard';
 import { ComparisonProvider } from '@/context/comparison-context';
 import { Button } from '@/components/ui/button';
 import type { PNode } from '@/types/pnode';
@@ -158,8 +159,13 @@ function DashboardContent() {
                         <ActivityChart nodes={nodes} networkStatus={networkStatus} isLoading={isLoading} />
                     </div>
 
-                    {/* Analytics Row: Version & Regional Distribution */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Analytics Row: Staked Leaderboard, Version & Regional Distribution */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <StakedLeaderboard
+                            nodes={nodes}
+                            isLoading={isLoading}
+                            onNodeSelect={handleNodeSelect}
+                        />
                         <VersionChart nodes={nodes} isLoading={isLoading} />
                         <RegionalStats nodes={nodes} isLoading={isLoading} />
                     </div>

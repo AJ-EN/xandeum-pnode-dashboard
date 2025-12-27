@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
 import type { PNode } from '@/types/pnode';
 import {
     Copy,
@@ -22,7 +21,6 @@ import {
     Clock,
     MapPin,
     Code,
-    ExternalLink,
     ChevronDown,
     ChevronUp,
 } from 'lucide-react';
@@ -130,8 +128,8 @@ export function NodeDetailSheet({ node, open, onOpenChange }: NodeDetailSheetPro
                 <SheetHeader className="pb-4">
                     <div className="flex items-center gap-3">
                         <div className={`h-3 w-3 rounded-full ${node.status === 'online' ? 'bg-green-500' :
-                                node.status === 'offline' ? 'bg-red-500' :
-                                    'bg-yellow-500'
+                            node.status === 'offline' ? 'bg-red-500' :
+                                'bg-yellow-500'
                             }`} />
                         <SheetTitle className="text-xl">
                             {node.operatorName || 'Unknown Operator'}
@@ -148,8 +146,8 @@ export function NodeDetailSheet({ node, open, onOpenChange }: NodeDetailSheetPro
                         <Badge
                             variant="outline"
                             className={`capitalize ${node.status === 'online' ? 'status-online' :
-                                    node.status === 'offline' ? 'status-offline' :
-                                        'status-degraded'
+                                node.status === 'offline' ? 'status-offline' :
+                                    'status-degraded'
                                 }`}
                         >
                             {node.status}
